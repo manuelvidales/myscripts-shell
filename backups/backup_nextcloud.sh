@@ -5,11 +5,11 @@
 #!/bin/sh
 
 DATE=`date +%Y%m%d%H%M%S`
-DEST_DIR='/var/backups/appsall/nextcloud'          # Carpeta destino backup
-SOURCE_DIRS='/usr/share/nginx/html/nextcloud'      # Carpeta origen backup
-NXT_BACKUP_STRING=nextcloud-dir-$DATE              # Nombre backup directorio
-BD_BACKUP_STRING=nextcloud-sql-$DATE.sql           # Nombre backup BD
-ERROR=0                                            # Control de errores
+DEST_DIR='/var/backups/appsall/nextcloud'           # Carpeta destino backup
+SOURCE_DIRS='/usr/share/nginx/html/nextcloud'       # Carpeta origen backup
+DIR_BACKUP=nextcloud-dir-$DATE                      # Nombre backup directorio
+BD_BACKUP=nextcloud-sql-$DATE.sql                   # Nombre backup BD
+ERROR=0                                             # Control de errores
 
 USER=user                                          # usuario de BD
 PASS=123                                           # pass de la BD
@@ -71,7 +71,7 @@ echo "[" `date +%Y-%m-%d_%R` "]" "== Modo Mantenimiento Activado =="
 #  Backup del directorio Nextcloud y grabar el log del proceso                           #
 ##########################################################################################
 
-sudo rsync $OPTIONS $EXCLUSSIONS $SOURCE_DIRS $DEST_DIR/$NXT_BACKUP_STRING 2>> $DEST_DIR/error.log
+sudo rsync $OPTIONS $EXCLUSSIONS $SOURCE_DIRS $DEST_DIR/$DIR_BACKUP 2>> $DEST_DIR/error.log
 
 if [ $? -ne 0 ]; then
     echo "####### Error rsync  #######"$'\r' >> $DEST_DIR/error.log
@@ -88,7 +88,7 @@ fi
 # Backup de la BD  de Nextcloud y grabando en un log el proceso                          #
 ##########################################################################################
 
-sudo mysqldump --single-transaction -h localhost --user=$USER --password=$PASS $DATABASE > $DEST_DIR/$BD_BACKUP_STRING 2>> $DEST_DIR/error.log
+sudo mysqldump --single-transaction -h localhost --user=$USER --password=$PASS $DATABASE > $DEST_DIR/$BD_BACKUP 2>> $DEST_DIR/error.log
 
 if [ $? -ne 0 ]; then
     echo -e "mysqldump fallo el $(date +'%d-%m-%Y %H:%M:%S')"$'\r' >> $DEST_DIR/error.log
@@ -101,7 +101,7 @@ else
 fi
 
 ##########################################################################################
-# Si no hay Error, Uno, Comprimo y Borro los Backups                                   #
+# Si no hay Error, Uno, Comprimo y Borro los BACKUPS                                     #
 ##########################################################################################
 
 if [ $ERROR -eq 0 ]; then
@@ -113,8 +113,8 @@ if [ $ERROR -eq 0 ]; then
     else
         echo  "[" `date +%Y-%m-%d_%R` "]" "tar -cvzf realizado correctamente" >> $DEST_DIR/success.log
         echo  "[" `date +%Y-%m-%d_%R` "]" "tar -cvzf realizado correctamente"
-        sudo rm -fr $DEST_DIR/$BD_BACKUP_STRING
-        sudo rm -fr $DEST_DIR/$NXT_BACKUP_STRING
+        sudo rm -fr $DEST_DIR/$BD_BACKUP
+        sudo rm -fr $DEST_DIR/$DIR_BACKUP
         echo "[" `date +%Y-%m-%d_%R` "]" "Backup Finzalido con exito!!!" >> $DEST_DIR/success.log
         echo "[" `date +%Y-%m-%d_%R` "]" "Backup Finzalido con exito!!!"
     fi
@@ -128,4 +128,3 @@ sudo -u nginx php /usr/share/nginx/html/nextcloud/occ maintenance:mode --off
 echo "[" `date +%Y-%m-%d_%R` "]" "== Modo Mantenimiento DESActivado	==" >> $DEST_DIR/success.log
 echo "[" `date +%Y-%m-%d_%R` "]" "== Modo Mantenimiento DESActivado =="
 ##########################################################################################
-
